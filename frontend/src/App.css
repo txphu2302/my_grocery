@@ -1,0 +1,140 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* Category navigation */
+.category-nav {
+  padding-bottom: 1rem;
+}
+
+.category-nav .nav-link {
+  margin-right: 0.5rem;
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+}
+
+.category-nav .nav-link.active {
+  background-color: #007bff;
+}
+
+/* Product carousel */
+.product-carousel .carousel-control-prev,
+.product-carousel .carousel-control-next {
+  width: 5%;
+  background: rgba(0,0,0,.2);
+  border-radius: 50%;
+  height: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Make product cards the same height */
+.card-product {
+  height: 400px; /* Set a fixed height for all cards */
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid rgba(0,0,0,0.125);
+}
+
+.card-product:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+
+/* Product card styling */
+.product-card {
+  flex: 1; /* Make card take up available space */
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none; /* Remove border if already set on card-product */
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Image container */
+.product-img-container {
+  height: 200px; /* Fixed height for image area */
+  width: 100%; /* Full width of the card */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: #fff; /* Optional: background for consistency */
+}
+
+.product-image {
+  max-height: 100%;
+  object-fit: contain;
+  width: auto;
+  max-width: 100%;
+}
+
+.product-title {
+  height: 1.5em;
+  overflow: hidden;
+}
+
+.product-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-title-link:hover {
+  color: #007bff;
+}
+
+.section-title {
+  font-weight: 600;
+  color: #343a40;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust width as needed */
+  gap: 1rem;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
