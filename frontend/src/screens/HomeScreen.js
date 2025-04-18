@@ -68,22 +68,23 @@ const HomeScreen = () => {
           {/* Products Display */}
           <div className="products-container">
             <Row className="g-4">
-              {products
-                .filter(product => activeCategory === 'all' || product.category === activeCategory)
-                .map((product) => (
-                <Col key={product._id} xs={6} sm={6} md={4} lg={3} className="mb-4">
-                  <div className="h-100">
-                    <Product product={product} />
-                  </div>
+              {products && products.length > 0 ? (
+                products
+                  .filter(product => activeCategory === 'all' || product.category === activeCategory)
+                  .map((product) => (
+                    <Col key={product._id} xs={6} sm={6} md={4} lg={3} className="mb-4">
+                      <div className="h-100">
+                        <Product product={product} />
+                      </div>
+                    </Col>
+                  ))
+              ) : (
+                <Col>
+                  <Message>Không có sản phẩm nào.</Message>
                 </Col>
-              ))}
+              )}
             </Row>
           </div>
-          
-          {/* If no products in the selected category */}
-          {products.filter(product => activeCategory === 'all' || product.category === activeCategory).length === 0 && (
-            <Message>Không có sản phẩm trong danh mục này</Message>
-          )}
           
           {/* Only show pagination if not filtering by category or showing all */}
           {(activeCategory === 'all' || keyword) && (
