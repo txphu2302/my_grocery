@@ -29,7 +29,7 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Configure CORS
 const corsOptions = {
-  origin: 'http://localhost:3000', // Your frontend URL
+  origin: ['https://taphoa-anha.vercel.app', 'http://localhost:3000'], // Add your Vercel URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
