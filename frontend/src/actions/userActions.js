@@ -1,4 +1,5 @@
-import axios from 'axios';
+// src/actions/userActions.js
+import api from '../utils/api.js';
 import {
   USER_DETAILS_FAIL,
   USER_DETAILS_REQUEST,
@@ -29,7 +30,8 @@ export const login = (email, password) => async (dispatch) => {
       },
     };
 
-    const { data } = await axios.post(
+    // Sử dụng api instance thay vì axios
+    const { data } = await api.post(
       '/api/users/login',
       { email, password },
       config
@@ -75,7 +77,8 @@ export const register = (name, email, password) => async (dispatch) => {
       },
     };
 
-    const { data } = await axios.post(
+    // Sử dụng api instance
+    const { data } = await api.post(
       '/api/users',
       { name, email, password },
       config
@@ -120,7 +123,8 @@ export const getUserDetails = (id) => async (dispatch, getState) => {
       },
     };
 
-    const { data } = await axios.get(`/api/users/${id}`, config);
+    // Sử dụng api instance
+    const { data } = await api.get(`/api/users/${id}`, config);
 
     dispatch({
       type: USER_DETAILS_SUCCESS,
@@ -154,7 +158,8 @@ export const updateUserProfile = (user) => async (dispatch, getState) => {
       },
     };
 
-    const { data } = await axios.put(`/api/users/profile`, user, config);
+    // Sử dụng api instance
+    const { data } = await api.put(`/api/users/profile`, user, config);
 
     dispatch({
       type: USER_UPDATE_PROFILE_SUCCESS,

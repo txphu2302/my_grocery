@@ -1,4 +1,5 @@
-import axios from 'axios';
+// src/actions/productActions.js
+import api from '../utils/api';
 import {
   PRODUCT_LIST_REQUEST,
   PRODUCT_LIST_SUCCESS,
@@ -17,13 +18,11 @@ import {
   PRODUCT_DELETE_FAIL,
 } from '../constants/productConstants';
 
-// Remove the API_URL as we'll use proxy instead
-
 export const listProducts = (keyword = '', pageNumber = '') => async (dispatch) => {
   try {
     dispatch({ type: PRODUCT_LIST_REQUEST });
 
-    const { data } = await axios.get(
+    const { data } = await api.get(
       `/api/products?keyword=${keyword}&pageNumber=${pageNumber}`
     );
 
@@ -46,7 +45,7 @@ export const listProductDetails = (id) => async (dispatch) => {
   try {
     dispatch({ type: PRODUCT_DETAILS_REQUEST });
 
-    const { data } = await axios.get(`/api/products/${id}`);
+    const { data } = await api.get(`/api/products/${id}`);
 
     dispatch({
       type: PRODUCT_DETAILS_SUCCESS,
@@ -67,21 +66,21 @@ export const createProduct = () => async (dispatch, getState) => {
   try {
     dispatch({
       type: PRODUCT_CREATE_REQUEST,
-    })
+    });
 
     const {
       userLogin: { userInfo },
-    } = getState()
+    } = getState();
 
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${userInfo.token}`,
       },
-    }
+    };
 
     // Generate a unique barcode with timestamp
-    const uniqueBarcode = `PROD${Date.now()}`
+    const uniqueBarcode = `PROD${Date.now()}`;
 
     const productData = {
       name: 'Tên sản phẩm mới',
@@ -92,14 +91,14 @@ export const createProduct = () => async (dispatch, getState) => {
       countInStock: 0,
       description: 'Mô tả sản phẩm',
       barcode: uniqueBarcode
-    }
+    };
 
-    const { data } = await axios.post(`/api/products`, productData, config)
+    const { data } = await api.post(`/api/products`, productData, config);
 
     dispatch({
       type: PRODUCT_CREATE_SUCCESS,
       payload: data,
-    })
+    });
   } catch (error) {
     dispatch({
       type: PRODUCT_CREATE_FAIL,
@@ -107,73 +106,70 @@ export const createProduct = () => async (dispatch, getState) => {
         error.response && error.response.data.message
           ? error.response.data.message
           : error.message,
-    })
+    });
   }
-}
+};
 
 export const updateProduct = (product) => async (dispatch, getState) => {
   try {
     dispatch({
       type: PRODUCT_UPDATE_REQUEST,
-    })
+    });
 
     const {
       userLogin: { userInfo },
-    } = getState()
+    } = getState();
 
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${userInfo.token}`,
       },
-    }
+    };
 
-    // Log the data being sent
-    console.log('Sending product update:', product)
-
-    const { data } = await axios.put(
+    const { data } = await api.put(
       `/api/products/${product._id}`,
       product,
       config
-    )
+    );
 
     dispatch({
       type: PRODUCT_UPDATE_SUCCESS,
       payload: data,
-    })
+    });
   } catch (error) {
-    console.error('Update product error:', error.response ? error.response.data : error)
+    console.error('Update product error:', error.response ? error.response.data : error);
     dispatch({
       type: PRODUCT_UPDATE_FAIL,
       payload:
         error.response && error.response.data.message
           ? error.response.data.message
           : error.message,
-    })
+    });
   }
-}
+};
 
 export const deleteProduct = (id) => async (dispatch, getState) => {
   try {
     dispatch({
       type: PRODUCT_DELETE_REQUEST,
-    })
+    });
 
     const {
       userLogin: { userInfo },
-    } = getState()
+    } = getState();
 
     const config = {
       headers: {
         Authorization: `Bearer ${userInfo.token}`,
       },
-    }
+    };
 
-    await axios.delete(`/api/products/${id}`, config)
+    await api.delete(`/api/products/${id}`, config);
 
     dispatch({
       type: PRODUCT_DELETE_SUCCESS,
-    })
+    });
   } catch (error) {
     dispatch({
       type: PRODUCT_DELETE_FAIL,
@@ -181,6 +177,6 @@ export const deleteProduct = (id) => async (dispatch, getState) => {
         error.response && error.response.data.message
           ? error.response.data.message
           : error.message,
-    })
+    });
   }
-}
+};
