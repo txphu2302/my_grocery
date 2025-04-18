@@ -8,7 +8,8 @@ const productSchema = mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
+      required: false,
+      default: '/images/sample.jpg',
     },
     category: {
       type: String,
@@ -37,6 +38,11 @@ const productSchema = mongoose.Schema(
       type: Number,
       required: true,
       default: 0,
+    },
+    barcode: {
+      type: String,
+      sparse: true,  // Only enforce uniqueness on non-null values
+      unique: true
     },
   },
   {

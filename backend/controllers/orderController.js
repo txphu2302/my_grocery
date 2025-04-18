@@ -1,7 +1,8 @@
-const asyncHandler = require('express-async-handler');
-const Order = require('../models/Order');
+// backend/controllers/orderController.js
+import asyncHandler from 'express-async-handler'
+import Order from '../models/Order.js'
 
-// @desc    Tạo đơn hàng mới
+// @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
 const addOrderItems = asyncHandler(async (req, res) => {
@@ -13,11 +14,11 @@ const addOrderItems = asyncHandler(async (req, res) => {
     taxPrice,
     shippingPrice,
     totalPrice,
-  } = req.body;
+  } = req.body
 
   if (orderItems && orderItems.length === 0) {
-    res.status(400);
-    throw new Error('Không có sản phẩm nào trong đơn hàng');
+    res.status(400)
+    throw new Error('No order items')
   } else {
     const order = new Order({
       orderItems,
@@ -28,67 +29,141 @@ const addOrderItems = asyncHandler(async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
-    });
+    })
 
-    const createdOrder = await order.save();
+    const createdOrder = await order.save()
 
-    res.status(201).json(createdOrder);
+    res.status(201).json(createdOrder)
   }
-});
+})
 
-// @desc    Lấy đơn hàng theo ID
+// @desc    Get order by ID
 // @route   GET /api/orders/:id
 // @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate(
     'user',
     'name email'
-  );
+  )
 
   if (order) {
-    res.json(order);
+    res.json(order)
   } else {
-    res.status(404);
-    throw new Error('Không tìm thấy đơn hàng');
+    res.status(404)
+    throw new Error('Order not found')
   }
-});
+})
 
-// @desc    Cập nhật đơn hàng thành đã thanh toán
+// @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay
 // @access  Private
 const updateOrderToPaid = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id)
 
   if (order) {
-    order.isPaid = true;
-    order.paidAt = Date.now();
+    order.isPaid = true
+    order.paidAt = Date.now()
     order.paymentResult = {
       id: req.body.id,
       status: req.body.status,
       update_time: req.body.update_time,
       email_address: req.body.payer.email_address,
-    };
+    }
 
-    const updatedOrder = await order.save();
+    const updatedOrder = await order.save()
 
-    res.json(updatedOrder);
+    res.json(updatedOrder)
   } else {
-    res.status(404);
-    throw new Error('Không tìm thấy đơn hàng');
+    res.status(404)
+    throw new Error('Order not found')
   }
-});
+})
 
-// @desc    Lấy danh sách đơn hàng của người dùng
+// @desc    Update order to delivered
+// @route   PUT /api/orders/:id/deliver
+// @access  Private/Admin
+const updateOrderToDelivered = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id)
+
+  if (order) {
+    order.isDelivered = true
+    order.deliveredAt = Date.now()
+
+    const updatedOrder = await order.save()
+
+    res.json(updatedOrder)
+  } else {
+    res.status(404)
+    throw new Error('Order not found')
+  }
+})
+
+// @desc    Get logged in user orders
 // @route   GET /api/orders/myorders
 // @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id });
-  res.json(orders);
-});
+  const orders = await Order.find({ user: req.user._id })
+  console.log('User ID:', req.user._id)
+  console.log('Found orders:', orders.length)
+  res.json(orders)
+})
 
-module.exports = {
+// @desc    Get all orders
+// @route   GET /api/orders
+// @access  Private/Admin
+const getOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({}).populate('user', 'id name')
+  res.json(orders)
+})
+
+// @desc    Verify bank payment for an order
+// @route   POST /api/orders/:id/verify-payment
+// @access  Private
+const verifyBankPayment = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id)
+
+  if (!order) {
+    res.status(404)
+    throw new Error('Order not found')
+  }
+
+  // Only verify bank transfers
+  if (order.paymentMethod !== 'BankTransfer') {
+    res.status(400)
+    throw new Error('Only bank transfer payments can be verified')
+  }
+
+  // If already paid, return success
+  if (order.isPaid) {
+    return res.json({ success: true, message: 'Order already paid' })
+  }
+
+  // Here you would integrate with bank API to verify payment
+  // For now, we'll simulate checking by always returning false
+  // In a real implementation, you would call a service like:
+  // const paymentFound = await bankVerificationService.checkPayment(order)
+  
+  // For demo purposes: 20% chance of finding payment (random)
+  const paymentFound = Math.random() < 0.2
+
+  if (paymentFound) {
+    order.isPaid = true
+    order.paidAt = Date.now()
+    
+    const updatedOrder = await order.save()
+    res.json({ success: true, order: updatedOrder })
+  } else {
+    res.json({ success: false, message: 'Payment not found yet' })
+  }
+})
+
+// To this ES Module export
+export {
   addOrderItems,
   getOrderById,
   updateOrderToPaid,
+  updateOrderToDelivered,
   getMyOrders,
-};
+  getOrders,
+  verifyBankPayment,
+}

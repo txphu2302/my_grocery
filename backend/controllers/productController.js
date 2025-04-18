@@ -64,25 +64,44 @@ const createProduct = asyncHandler(async (req, res) => {
 // @route  PUT /api/products/:id
 // @access Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, price, description, image, category, countInStock } = req.body;
+  const {
+    name,
+    price,
+    description,
+    image,
+    brand,
+    category,
+    countInStock,
+    barcode
+  } = req.body
 
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findById(req.params.id)
 
   if (product) {
-    product.name = name || product.name;
-    product.price = price || product.price;
-    product.description = description || product.description;
-    product.image = image || product.image;
-    product.category = category || product.category;
-    product.countInStock = countInStock || product.countInStock;
+    product.name = name || product.name
+    product.price = price !== undefined ? price : product.price
+    product.description = description || product.description
+    product.image = image || product.image
+    product.brand = brand || product.brand
+    product.category = category || product.category
+    product.countInStock = countInStock !== undefined ? countInStock : product.countInStock
+    product.barcode = barcode || product.barcode
 
-    const updatedProduct = await product.save();
-    res.json(updatedProduct);
+    try {
+      const updatedProduct = await product.save()
+      res.json(updatedProduct)
+    } catch (error) {
+      console.error('Product update error:', error)
+      res.status(400).json({
+        message: 'Product update failed',
+        error: error.message
+      })
+    }
   } else {
-    res.status(404);
-    throw new Error('Không tìm thấy sản phẩm');
+    res.status(404)
+    throw new Error('Product not found')
   }
-});
+})
 
 // @desc   Xóa sản phẩm
 // @route  DELETE /api/products/:id

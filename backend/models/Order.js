@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+// backend/models/Order.js
+import mongoose from 'mongoose'
 
 const orderSchema = mongoose.Schema(
   {
@@ -25,6 +26,7 @@ const orderSchema = mongoose.Schema(
       city: { type: String, required: true },
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
+      phoneNumber: { type: String, required: true },
     },
     paymentMethod: {
       type: String,
@@ -35,11 +37,6 @@ const orderSchema = mongoose.Schema(
       status: { type: String },
       update_time: { type: String },
       email_address: { type: String },
-    },
-    itemsPrice: {
-      type: Number,
-      required: true,
-      default: 0.0,
     },
     taxPrice: {
       type: Number,
@@ -76,8 +73,8 @@ const orderSchema = mongoose.Schema(
   {
     timestamps: true,
   }
-);
+)
 
-const Order = mongoose.model('Order', orderSchema);
+const Order = mongoose.model('Order', orderSchema)
 
-module.exports = Order;
+export default Order
