@@ -107,10 +107,15 @@ const updateProduct = asyncHandler(async (req, res) => {
 // @route  DELETE /api/products/:id
 // @access Private/Admin
 const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400);
+    throw new Error('ID sản phẩm không hợp lệ');
+  }
 
+  const product = await Product.findById(id);
   if (product) {
-    await product.remove();
+    await Product.deleteOne({ _id: id });
     res.json({ message: 'Đã xóa sản phẩm' });
   } else {
     res.status(404);
