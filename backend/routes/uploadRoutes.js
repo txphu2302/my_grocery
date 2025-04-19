@@ -32,10 +32,15 @@ const upload = multer({
 // Upload route
 router.post('/', upload.single('image'), (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Không có file nào được tải lên' })
+    }
+    
     // Cloudinary sẽ trả về URL trực tiếp
     res.send(req.file.path)
   } catch (error) {
-    res.status(400).send({ message: 'Không thể tải lên hình ảnh' })
+    console.error('Lỗi upload:', error)
+    res.status(400).json({ message: 'Không thể tải lên hình ảnh: ' + error.message })
   }
 })
 
