@@ -1,44 +1,42 @@
-// In backend/routes/uploadRoutes.js
-import path from 'path'
+// backend/routes/uploadRoutes.js
 import express from 'express'
 import multer from 'multer'
+import { CloudinaryStorage } from 'multer-storage-cloudinary'
+import cloudinary from '../utils/cloudinary.js'
 
 const router = express.Router()
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename(req, file, cb) {
-    cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`)
-  },
-})
-
-// Check file type
-function checkFileType(file, cb) {
-  const filetypes = /jpg|jpeg|png/
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase())
-  const mimetype = filetypes.test(file.mimetype)
-
-  if (extname && mimetype) {
-    return cb(null, true)
-  } else {
-    cb('Chỉ chấp nhận hình ảnh!')
+// Configure Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'taphoaanha', // Thư mục trên Cloudinary
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 500, crop: 'limit' }] // Tối ưu kích thước ảnh
   }
-}
-
-const upload = multer({
-  storage,
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb)
-  },
 })
 
+// Init upload middleware
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn 5MB
+  fileFilter: function (req, file, cb) {
+    // Kiểm tra định dạng file
+    if (!file.mimetype.match(/jpg|jpeg|png|webp/)) {
+      return cb(new Error('Chỉ chấp nhận file hình ảnh JPG, JPEG, PNG hoặc WebP'), false)
+    }
+    cb(null, true)
+  }
+})
+
+// Upload route
 router.post('/', upload.single('image'), (req, res) => {
-  // Convert Windows backslashes to forward slashes for web URLs
-  const filePath = req.file.path.replace(/\\/g, '/')
-  res.send(`/${filePath}`)
+  try {
+    // Cloudinary sẽ trả về URL trực tiếp
+    res.send(req.file.path)
+  } catch (error) {
+    res.status(400).send({ message: 'Không thể tải lên hình ảnh' })
+  }
 })
 
 export default router
