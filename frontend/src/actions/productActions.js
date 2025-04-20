@@ -85,12 +85,13 @@ export const createProduct = () => async (dispatch, getState) => {
     const productData = {
       name: 'Tên sản phẩm mới',
       price: 0,
-      image: 'https://via.placeholder.com/500x500?text=Sản+phẩm+mới', // Use a placeholder service
+      image: 'https://via.placeholder.com/500x500?text=Sản+phẩm+mới',
       brand: 'Thương hiệu',
       category: 'Danh mục',
       countInStock: 0,
       description: 'Mô tả sản phẩm',
-      barcode: uniqueBarcode
+      barcode: uniqueBarcode,
+      units: [{ name: 'Sản phẩm', ratio: 1, price: 0, description: '', isDefault: true }], // Add default unit
     };
 
     const { data } = await api.post(`/api/products`, productData, config);

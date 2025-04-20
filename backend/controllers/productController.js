@@ -102,21 +102,25 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
 
 const createProduct = asyncHandler(async (req, res) => {
+  const { name, price, image, brand, category, countInStock, description, barcode, units } = req.body;
+
   const product = new Product({
-    name: 'Tên sản phẩm',
-    price: 0,
+    name: name || 'Tên sản phẩm',
+    price: price || 0,
     user: req.user._id,
-    image: '/images/sample.jpg',
-    brand: 'Thương hiệu',
-    category: 'Danh mục',
-    countInStock: 0,
+    image: image || '/images/sample.jpg',
+    brand: brand || 'Thương hiệu',
+    category: category || 'Danh mục',
+    countInStock: countInStock || 0,
     numReviews: 0,
-    description: 'Mô tả sản phẩm'
+    description: description || 'Mô tả sản phẩm',
+    barcode: barcode || `PROD${Date.now()}`,
+    units: units || [{ name: 'Sản phẩm', ratio: 1, price: price || 0, description: '', isDefault: true }], // Default unit
   });
 
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
-});
+});  
 
 // @desc   Cập nhật sản phẩm
 // @route  PUT /api/products/:id

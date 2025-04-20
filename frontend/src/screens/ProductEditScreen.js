@@ -57,18 +57,22 @@ const ProductEditScreen = () => {
         setCountInStock(product.countInStock);
         setDescription(product.description);
         setBarcode(product.barcode || '');
-        
+  
         // Khởi tạo đơn vị sản phẩm từ dữ liệu hoặc đơn vị mặc định
         if (product.units && product.units.length > 0) {
+          console.log('Units loaded from product:', product.units); // Log to verify units
           setUnits(product.units);
         } else {
-          setUnits([{ 
-            name: 'Sản phẩm', 
-            ratio: 1, 
-            price: product.price,
-            description: '',
-            isDefault: true 
-          }]);
+          console.log('No units found, setting default unit');
+          setUnits([
+            { 
+              name: 'Sản phẩm', 
+              ratio: 1, 
+              price: product.price,
+              description: '',
+              isDefault: true 
+            }
+          ]);
         }
       }
     }
