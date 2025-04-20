@@ -24,6 +24,10 @@ const unitSchema = mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  image: { // Add image field for each unit
+    type: String,
+    default: '',
+  },
 });
 
 const productSchema = mongoose.Schema(

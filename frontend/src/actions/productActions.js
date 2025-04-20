@@ -79,7 +79,6 @@ export const createProduct = () => async (dispatch, getState) => {
       },
     };
 
-    // Generate a unique barcode with timestamp
     const uniqueBarcode = `PROD${Date.now()}`;
 
     const productData = {
@@ -91,7 +90,16 @@ export const createProduct = () => async (dispatch, getState) => {
       countInStock: 0,
       description: 'Mô tả sản phẩm',
       barcode: uniqueBarcode,
-      units: [{ name: 'Sản phẩm', ratio: 1, price: 0, description: '', isDefault: true }], // Add default unit
+      units: [
+        { 
+          name: 'Sản phẩm', 
+          ratio: 1, 
+          price: 0, 
+          description: '', 
+          image: '', // Add image field
+          isDefault: true 
+        }
+      ],
     };
 
     const { data } = await api.post(`/api/products`, productData, config);

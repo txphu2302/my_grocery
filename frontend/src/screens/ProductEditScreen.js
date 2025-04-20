@@ -23,16 +23,19 @@ const ProductEditScreen = () => {
   const [barcode, setBarcode] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
-  
-  // Thêm state để quản lý đơn vị sản phẩm
-  const [units, setUnits] = useState([{ 
-    name: 'Sản phẩm', 
-    ratio: 1, 
-    price: 0,
-    description: '',
-    isDefault: true 
-  }]);
-  
+
+  // Thêm state để quản lý đơn vị sản phẩm, bao gồm image
+  const [units, setUnits] = useState([
+    { 
+      name: 'Sản phẩm', 
+      ratio: 1, 
+      price: 0,
+      description: '',
+      image: '', // Add image field
+      isDefault: true 
+    }
+  ]);
+
   const dispatch = useDispatch();
 
   const productDetails = useSelector((state) => state.productDetails);
@@ -57,10 +60,10 @@ const ProductEditScreen = () => {
         setCountInStock(product.countInStock);
         setDescription(product.description);
         setBarcode(product.barcode || '');
-  
+
         // Khởi tạo đơn vị sản phẩm từ dữ liệu hoặc đơn vị mặc định
         if (product.units && product.units.length > 0) {
-          console.log('Units loaded from product:', product.units); // Log to verify units
+          console.log('Units loaded from product:', product.units);
           setUnits(product.units);
         } else {
           console.log('No units found, setting default unit');
@@ -70,6 +73,7 @@ const ProductEditScreen = () => {
               ratio: 1, 
               price: product.price,
               description: '',
+              image: '', // Include image field
               isDefault: true 
             }
           ]);
@@ -87,6 +91,7 @@ const ProductEditScreen = () => {
         ratio: 1,
         price: 0,
         description: '',
+        image: '', // Add image field
         isDefault: units.length === 0
       }
     ]);
@@ -97,31 +102,28 @@ const ProductEditScreen = () => {
       alert('Sản phẩm phải có ít nhất một đơn vị');
       return;
     }
-    
-    // Nếu xóa đơn vị mặc định, đặt đơn vị đầu tiên làm mặc định
+
     const isRemovingDefault = units[index].isDefault;
     const updatedUnits = [...units];
     updatedUnits.splice(index, 1);
-    
+
     if (isRemovingDefault && updatedUnits.length > 0) {
       updatedUnits[0].isDefault = true;
     }
-    
+
     setUnits(updatedUnits);
   };
 
   const updateUnit = (index, field, value) => {
     const updatedUnits = [...units];
     updatedUnits[index][field] = value;
-    
-    // Tự động tính giá theo tỷ lệ khi thay đổi ratio
+
     if (field === 'ratio' && value > 0) {
-      // Chỉ tính toán tự động nếu giá chưa được đặt
       if (!updatedUnits[index].price || updatedUnits[index].price === 0) {
         updatedUnits[index].price = Math.round(price / value);
       }
     }
-    
+
     setUnits(updatedUnits);
   };
 
@@ -133,43 +135,52 @@ const ProductEditScreen = () => {
     setUnits(updatedUnits);
   };
 
-  const uploadFileHandler = async (e) => {
+  const uploadFileHandler = async (e, unitIndex) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
     const maxSize = 5 * 1024 * 1024; // 5MB
-  
+
     if (!validTypes.includes(file.type)) {
       setUploadError('Chỉ chấp nhận file JPG, JPEG, PNG hoặc WebP');
       return;
     }
-  
+
     if (file.size > maxSize) {
       setUploadError('Kích thước file không được vượt quá 5MB');
       return;
     }
-  
+
     setUploadError(null);
     const formData = new FormData();
     formData.append('image', file);
     setUploading(true);
-  
+
     try {
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       };
-  
+
       const { data } = await axios.post(
         'https://taphoaanha-com.onrender.com/api/upload',
         formData,
         config
       );
-      
+
       console.log('Upload response:', data);
-      setImage(data);
+
+      if (unitIndex !== undefined) {
+        // Update the image for the specific unit
+        const updatedUnits = [...units];
+        updatedUnits[unitIndex].image = data;
+        setUnits(updatedUnits);
+      } else {
+        // Update the main product image
+        setImage(data);
+      }
       setUploading(false);
     } catch (error) {
       console.error('Upload error:', error);
@@ -197,17 +208,16 @@ const ProductEditScreen = () => {
       return alert('Vui lòng nhập danh mục sản phẩm');
     }
 
-    // Kiểm tra và làm sạch dữ liệu đơn vị
     const cleanedUnits = units.map(unit => ({
       ...unit,
       name: unit.name.trim() || 'Sản phẩm',
       ratio: Number(unit.ratio) || 1,
       price: unit.price ? Number(unit.price) : 0,
       description: unit.description || '',
+      image: unit.image || '', // Ensure image field is included
       isDefault: !!unit.isDefault
     }));
 
-    // Đảm bảo có ít nhất 1 đơn vị mặc định
     if (!cleanedUnits.some(unit => unit.isDefault)) {
       cleanedUnits[0].isDefault = true;
     }
@@ -226,7 +236,7 @@ const ProductEditScreen = () => {
         description,
         countInStock,
         barcode: finalBarcode,
-        units: cleanedUnits // Thêm units vào dữ liệu cập nhật
+        units: cleanedUnits
       })
     );
   };
@@ -266,10 +276,7 @@ const ProductEditScreen = () => {
                 onChange={(e) => {
                   const newPrice = Number(e.target.value);
                   setPrice(newPrice);
-                  
-                  // Cập nhật giá đơn vị theo tỷ lệ khi giá gốc thay đổi
                   const updatedUnits = units.map(unit => {
-                    // Nếu là đơn vị cơ bản (ratio = 1) hoặc giá chưa được thiết lập
                     if (unit.ratio === 1 || !unit.price || unit.price === 0) {
                       return {
                         ...unit,
@@ -378,10 +385,11 @@ const ProductEditScreen = () => {
             <div className="mt-4 border rounded p-3 bg-light">
               <h4>Quản lý đơn vị sản phẩm</h4>
               <p className="text-muted">Thiết lập các đơn vị bán (Thùng, Lốc, Lon,...) và giá tương ứng</p>
-              
+
               <Table striped bordered responsive className="mt-3">
                 <thead>
                   <tr>
+                    <th style={{ width: '120px' }}>Hình ảnh</th>
                     <th>Tên đơn vị</th>
                     <th>Tỷ lệ quy đổi</th>
                     <th>Giá (VNĐ)</th>
@@ -393,6 +401,23 @@ const ProductEditScreen = () => {
                 <tbody>
                   {units.map((unit, index) => (
                     <tr key={index}>
+                      <td>
+                        {unit.image ? (
+                          <img
+                            src={unit.image}
+                            alt={unit.name}
+                            style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <span>Chưa có ảnh</span>
+                        )}
+                        <Form.Control
+                          size="sm"
+                          type="file"
+                          onChange={(e) => uploadFileHandler(e, index)}
+                          accept=".jpg,.jpeg,.png,.webp"
+                        />
+                      </td>
                       <td>
                         <Form.Control
                           size="sm"
@@ -454,7 +479,7 @@ const ProductEditScreen = () => {
                   ))}
                 </tbody>
               </Table>
-              
+
               <Button variant="outline-primary" onClick={addUnit} className="mt-2">
                 <i className="fas fa-plus me-1"></i> Thêm đơn vị
               </Button>

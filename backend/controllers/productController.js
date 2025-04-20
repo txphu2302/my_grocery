@@ -115,12 +115,21 @@ const createProduct = asyncHandler(async (req, res) => {
     numReviews: 0,
     description: description || 'Mô tả sản phẩm',
     barcode: barcode || `PROD${Date.now()}`,
-    units: units || [{ name: 'Sản phẩm', ratio: 1, price: price || 0, description: '', isDefault: true }], // Default unit
+    units: units || [
+      { 
+        name: 'Sản phẩm', 
+        ratio: 1, 
+        price: price || 0, 
+        description: '', 
+        image: '', // Add image field
+        isDefault: true 
+      }
+    ],
   });
 
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
-});  
+});
 
 // @desc   Cập nhật sản phẩm
 // @route  PUT /api/products/:id
