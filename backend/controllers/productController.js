@@ -134,7 +134,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     brand,
     category,
     countInStock,
-    barcode
+    barcode,
+    units // Add units to destructuring
   } = req.body;
 
   const product = await Product.findById(req.params.id);
@@ -148,8 +149,10 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.category = category;
     product.countInStock = countInStock;
     if (barcode) product.barcode = barcode;
+    if (units) product.units = units; // Update units field
 
     const updatedProduct = await product.save();
+    console.log('Updated product with units:', updatedProduct.units); // Log to verify
     res.json(updatedProduct);
   } else {
     res.status(404);
