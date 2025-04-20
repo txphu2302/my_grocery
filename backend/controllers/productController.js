@@ -101,13 +101,11 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 
-// @desc   Tạo sản phẩm
-// @route  POST /api/products
-// @access Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
   const product = new Product({
     name: 'Tên sản phẩm',
     price: 0,
+    retailPrice: 0, // Thêm giá bán lẻ
     user: req.user._id,
     image: '/images/sample.jpg',
     brand: 'Thương hiệu',
@@ -128,6 +126,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   const {
     name,
     price,
+    retailPrice, // Thêm giá bán lẻ
     description,
     image,
     brand,
@@ -141,6 +140,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   if (product) {
     product.name = name;
     product.price = price;
+    product.retailPrice = retailPrice || (price * 1.2); // Nếu không có giá bán lẻ, mặc định tính 120% giá gốc
     product.description = description;
     product.image = image;
     product.brand = brand;

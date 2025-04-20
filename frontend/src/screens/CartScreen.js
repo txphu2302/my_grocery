@@ -1,9 +1,7 @@
-// In src/screens/CartScreen.js
-
 import React, { useEffect } from 'react'
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Row, Col, ListGroup, Image, Form, Button, Card } from 'react-bootstrap'
+import { Row, Col, ListGroup, Image, Form, Button, Card, Badge } from 'react-bootstrap'
 import Message from '../components/Message'
 import { addToCart, removeFromCart } from '../actions/cartActions'
 
@@ -13,7 +11,11 @@ const CartScreen = () => {
   const navigate = useNavigate()
   
   const productId = params.id
-  const qty = location.search ? Number(location.search.split('=')[1]) : 1
+  
+  // Lấy thông tin quantity và unit từ URL
+  const queryParams = new URLSearchParams(location.search);
+  const qty = queryParams.get('qty') ? Number(queryParams.get('qty')) : 1;
+  const unit = queryParams.get('unit') || 'Sản phẩm';
   
   const dispatch = useDispatch()
   
@@ -22,9 +24,9 @@ const CartScreen = () => {
   
   useEffect(() => {
     if (productId) {
-      dispatch(addToCart(productId, qty))
+      dispatch(addToCart(productId, qty, unit))
     }
-  }, [dispatch, productId, qty])
+  }, [dispatch, productId, qty, unit])
   
   const removeFromCartHandler = (id) => {
     dispatch(removeFromCart(id))
@@ -53,14 +55,23 @@ const CartScreen = () => {
                   <Col md={3}>
                     <Link to={`/product/${item.product}`}>{item.name}</Link>
                   </Col>
-                  <Col md={2}>{item.price.toLocaleString('vi-VN')}đ</Col>
+                  <Col md={2}>
+                    <div>
+                      {item.price.toLocaleString('vi-VN')}đ
+                      {item.unit && item.unit.name !== 'Sản phẩm' && (
+                        <Badge bg="secondary" className="ms-1">
+                          /{item.unit.name}
+                        </Badge>
+                      )}
+                    </div>
+                  </Col>
                   <Col md={2}>
                     <Form.Control
                       as='select'
                       value={item.qty}
                       onChange={(e) =>
                         dispatch(
-                          addToCart(item.product, Number(e.target.value))
+                          addToCart(item.product, Number(e.target.value), item.unit?.name)
                         )
                       }
                     >
@@ -71,13 +82,16 @@ const CartScreen = () => {
                       ))}
                     </Form.Control>
                   </Col>
-                  <Col md={2}>
+                  <Col md={2} className="text-center">
+                    <Badge bg="info">{item.unit?.name || 'Sản phẩm'}</Badge>
+                  </Col>
+                  <Col md={1} className="text-end">
                     <Button
                       type='button'
                       variant='danger'
                       onClick={() => removeFromCartHandler(item.product)}
                     >
-                      <i className='fas fa-trash'></i> Xóa
+                      <i className='fas fa-trash'></i>
                     </Button>
                   </Col>
                 </Row>
@@ -90,12 +104,14 @@ const CartScreen = () => {
         <Card>
           <ListGroup variant='flush'>
             <ListGroup.Item>
-              <h2>
+              <h2 className="fs-5">
                 Tổng cộng ({cartItems.reduce((acc, item) => acc + item.qty, 0)}) sản phẩm
               </h2>
-              {cartItems
-                .reduce((acc, item) => acc + item.qty * item.price, 0)
-                .toLocaleString('vi-VN')}đ
+              <h4 className="mt-3 text-primary">
+                {cartItems
+                  .reduce((acc, item) => acc + item.qty * item.price, 0)
+                  .toLocaleString('vi-VN')}đ
+              </h4>
             </ListGroup.Item>
             <ListGroup.Item>
               <Button
@@ -104,6 +120,7 @@ const CartScreen = () => {
                 disabled={cartItems.length === 0}
                 onClick={checkoutHandler}
               >
+                <i className="fas fa-shopping-cart me-2"></i>
                 Tiến hành thanh toán
               </Button>
             </ListGroup.Item>

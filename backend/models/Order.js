@@ -1,4 +1,4 @@
-// backend/models/Order.js
+// models/Order.js
 import mongoose from 'mongoose'
 
 const orderSchema = mongoose.Schema(
@@ -14,6 +14,11 @@ const orderSchema = mongoose.Schema(
         qty: { type: Number, required: true },
         image: { type: String, required: true },
         price: { type: Number, required: true },
+        // Thêm thông tin đơn vị
+        unit: { 
+          name: { type: String, default: 'Sản phẩm' }, // Tên đơn vị
+          ratio: { type: Number, default: 1 } // Tỷ lệ quy đổi
+        },
         product: {
           type: mongoose.Schema.Types.ObjectId,
           required: true,
