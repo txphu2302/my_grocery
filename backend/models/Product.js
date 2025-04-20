@@ -23,14 +23,13 @@ const productSchema = mongoose.Schema(
     brand: { type: String, required: true, default: 'Chưa có thương hiệu' },
     category: { type: String, required: true },
     description: { type: String, required: true },
-    price: { type: Number, required: true, default: 0 }, // Giá gốc/nhập
-    retailPrice: { type: Number, default: 0 }, // Giá bán lẻ
+    price: { type: Number, required: true, default: 0 }, // Giá sản phẩm
     countInStock: { type: Number, required: true, default: 0 },
     rating: { type: Number, required: true, default: 0 },
     numReviews: { type: Number, required: true, default: 0 },
     barcode: { type: String, sparse: true },
     
-    // Thêm trường đơn vị sản phẩm
+    // Giữ lại trường đơn vị sản phẩm
     units: [unitSchema]
   },
   { timestamps: true }

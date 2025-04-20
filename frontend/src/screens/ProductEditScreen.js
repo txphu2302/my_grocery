@@ -23,11 +23,16 @@ const ProductEditScreen = () => {
   const [barcode, setBarcode] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
-  const [retailPrice, setRetailPrice] = useState(0);
   
-  // State cho quản lý đơn vị
-  const [units, setUnits] = useState([]);
-
+  // Thêm state để quản lý đơn vị sản phẩm
+  const [units, setUnits] = useState([{ 
+    name: 'Sản phẩm', 
+    ratio: 1, 
+    price: 0,
+    description: '',
+    isDefault: true 
+  }]);
+  
   const dispatch = useDispatch();
 
   const productDetails = useSelector((state) => state.productDetails);
@@ -46,7 +51,6 @@ const ProductEditScreen = () => {
       } else {
         setName(product.name);
         setPrice(product.price);
-        setRetailPrice(product.retailPrice || product.price * 1.2);
         setImage(product.image);
         setBrand(product.brand);
         setCategory(product.category);
@@ -54,15 +58,15 @@ const ProductEditScreen = () => {
         setDescription(product.description);
         setBarcode(product.barcode || '');
         
-        // Khởi tạo units từ dữ liệu sản phẩm hoặc tạo mặc định
+        // Khởi tạo đơn vị sản phẩm từ dữ liệu hoặc đơn vị mặc định
         if (product.units && product.units.length > 0) {
           setUnits(product.units);
         } else {
-          // Tạo đơn vị mặc định
           setUnits([{ 
             name: 'Sản phẩm', 
             ratio: 1, 
-            price: product.retailPrice || product.price,
+            price: product.price,
+            description: '',
             isDefault: true 
           }]);
         }
@@ -70,7 +74,7 @@ const ProductEditScreen = () => {
     }
   }, [dispatch, id, product, successUpdate, navigate]);
 
-  // Các hàm xử lý đơn vị sản phẩm
+  // Hàm quản lý đơn vị sản phẩm
   const addUnit = () => {
     setUnits([
       ...units, 
@@ -90,10 +94,10 @@ const ProductEditScreen = () => {
       return;
     }
     
-    // Nếu xóa đơn vị mặc định, cần đặt đơn vị khác làm mặc định
+    // Nếu xóa đơn vị mặc định, đặt đơn vị đầu tiên làm mặc định
     const isRemovingDefault = units[index].isDefault;
-    
-    const updatedUnits = units.filter((_, i) => i !== index);
+    const updatedUnits = [...units];
+    updatedUnits.splice(index, 1);
     
     if (isRemovingDefault && updatedUnits.length > 0) {
       updatedUnits[0].isDefault = true;
@@ -106,10 +110,12 @@ const ProductEditScreen = () => {
     const updatedUnits = [...units];
     updatedUnits[index][field] = value;
     
-    // Tự động tính giá theo tỷ lệ nếu thay đổi ratio
+    // Tự động tính giá theo tỷ lệ khi thay đổi ratio
     if (field === 'ratio' && value > 0) {
-      const basePrice = retailPrice > 0 ? retailPrice : price;
-      updatedUnits[index].price = Math.round(basePrice / value);
+      // Chỉ tính toán tự động nếu giá chưa được đặt
+      if (!updatedUnits[index].price || updatedUnits[index].price === 0) {
+        updatedUnits[index].price = Math.round(price / value);
+      }
     }
     
     setUnits(updatedUnits);
@@ -187,14 +193,13 @@ const ProductEditScreen = () => {
       return alert('Vui lòng nhập danh mục sản phẩm');
     }
 
-    // Kiểm tra và làm sạch dữ liệu units
+    // Kiểm tra và làm sạch dữ liệu đơn vị
     const cleanedUnits = units.map(unit => ({
       ...unit,
       name: unit.name.trim() || 'Sản phẩm',
       ratio: Number(unit.ratio) || 1,
       price: unit.price ? Number(unit.price) : 0,
       description: unit.description || '',
-      image: unit.image || '',
       isDefault: !!unit.isDefault
     }));
 
@@ -211,22 +216,15 @@ const ProductEditScreen = () => {
         _id: id,
         name,
         price,
-        retailPrice,
         image,
         brand: finalBrand,
         category,
         description,
         countInStock,
         barcode: finalBarcode,
-        units: cleanedUnits // Thêm đơn vị sản phẩm
+        units: cleanedUnits // Thêm units vào dữ liệu cập nhật
       })
     );
-  };
-
-  // Tính giá bán lẻ tự động từ giá nhập
-  const calculateRetailPrice = (percentage) => {
-    const markup = 1 + percentage / 100;
-    setRetailPrice(Math.round(price * markup));
   };
 
   return (
@@ -255,82 +253,33 @@ const ProductEditScreen = () => {
               />
             </Form.Group>
 
-            {/* Giá nhập và giá bán lẻ */}
-            <Row className='mt-3'>
-              <Col md={6}>
-                <Form.Group controlId='price'>
-                  <Form.Label>Giá nhập (VNĐ) <span className="text-danger">*</span></Form.Label>
-                  <Form.Control
-                    type='number'
-                    placeholder='Nhập giá gốc/nhập'
-                    value={price}
-                    onChange={(e) => {
-                      const newPrice = Number(e.target.value);
-                      setPrice(newPrice);
-                      // Tự động cập nhật giá bán lẻ nếu có tỷ lệ markup
-                      if (retailPrice > 0 && price > 0) {
-                        const currentMarkup = retailPrice / price;
-                        setRetailPrice(Math.round(newPrice * currentMarkup));
-                      }
-                    }}
-                    min="0"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group controlId='retailPrice'>
-                  <Form.Label>Giá bán lẻ (VNĐ)</Form.Label>
-                  <Form.Control
-                    type='number'
-                    placeholder='Nhập giá bán lẻ'
-                    value={retailPrice}
-                    onChange={(e) => setRetailPrice(Number(e.target.value))}
-                    min="0"
-                    className="mb-2"
-                  />
-                  <div className="d-flex justify-content-between align-items-center">
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm"
-                      onClick={() => calculateRetailPrice(20)}
-                    >
-                      <i className="fas fa-calculator me-1"></i> +20%
-                    </Button>
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm"
-                      onClick={() => calculateRetailPrice(30)}
-                    >
-                      <i className="fas fa-calculator me-1"></i> +30%
-                    </Button>
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm"
-                      onClick={() => calculateRetailPrice(50)}
-                    >
-                      <i className="fas fa-calculator me-1"></i> +50%
-                    </Button>
-                  </div>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            {/* Hiển thị thông tin lợi nhuận */}
-            {price > 0 && retailPrice > 0 && (
-              <div className="mt-2 mb-3">
-                <div className="d-flex justify-content-between bg-light p-2 rounded">
-                  <div>
-                    <strong>Chênh lệch:</strong> {(retailPrice - price).toLocaleString('vi-VN')}đ
-                  </div>
-                  <div>
-                    <strong>Markup:</strong> {price > 0 ? Math.round((retailPrice / price - 1) * 100) : 0}%
-                  </div>
-                  <div>
-                    <strong>Lợi nhuận:</strong> {retailPrice > 0 ? Math.round((1 - price / retailPrice) * 100) : 0}%
-                  </div>
-                </div>
-              </div>
-            )}
+            <Form.Group controlId='price' className='mt-3'>
+              <Form.Label>Giá sản phẩm (VNĐ) <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type='number'
+                placeholder='Nhập giá sản phẩm'
+                value={price}
+                onChange={(e) => {
+                  const newPrice = Number(e.target.value);
+                  setPrice(newPrice);
+                  
+                  // Cập nhật giá đơn vị theo tỷ lệ khi giá gốc thay đổi
+                  const updatedUnits = units.map(unit => {
+                    // Nếu là đơn vị cơ bản (ratio = 1) hoặc giá chưa được thiết lập
+                    if (unit.ratio === 1 || !unit.price || unit.price === 0) {
+                      return {
+                        ...unit,
+                        price: newPrice / unit.ratio
+                      };
+                    }
+                    return unit;
+                  });
+                  setUnits(updatedUnits);
+                }}
+                min="0"
+                required
+              />
+            </Form.Group>
 
             <Form.Group controlId='image' className='mt-3'>
               <Form.Label>Hình ảnh <span className="text-danger">*</span></Form.Label>
@@ -388,7 +337,7 @@ const ProductEditScreen = () => {
                     type='number'
                     placeholder='Nhập số lượng'
                     value={countInStock}
-                    onChange={(e) => setCountInStock(e.target.value)}
+                    onChange={(e) => setCountInStock(Number(e.target.value))}
                     min="0"
                   />
                 </Form.Group>
@@ -421,19 +370,20 @@ const ProductEditScreen = () => {
               />
             </Form.Group>
 
-            {/* Quản lý đơn vị sản phẩm */}
+            {/* Đơn vị sản phẩm */}
             <div className="mt-4 border rounded p-3 bg-light">
-              <h4 className="mb-3">Quản lý đơn vị sản phẩm</h4>
+              <h4>Quản lý đơn vị sản phẩm</h4>
+              <p className="text-muted">Thiết lập các đơn vị bán (Thùng, Lốc, Lon,...) và giá tương ứng</p>
               
-              <Table striped bordered hover responsive>
+              <Table striped bordered responsive className="mt-3">
                 <thead>
                   <tr>
                     <th>Tên đơn vị</th>
                     <th>Tỷ lệ quy đổi</th>
-                    <th>Giá bán</th>
+                    <th>Giá (VNĐ)</th>
                     <th>Mô tả</th>
-                    <th>Mặc định</th>
-                    <th>Thao tác</th>
+                    <th style={{ width: '80px' }}>Mặc định</th>
+                    <th style={{ width: '80px' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -441,38 +391,41 @@ const ProductEditScreen = () => {
                     <tr key={index}>
                       <td>
                         <Form.Control
+                          size="sm"
                           type="text"
                           value={unit.name}
                           onChange={(e) => updateUnit(index, 'name', e.target.value)}
-                          placeholder="VD: Thùng, Lốc, Lon..."
-                          size="sm"
+                          placeholder="VD: Thùng/Lốc/Lon"
                         />
                       </td>
                       <td>
                         <Form.Control
+                          size="sm"
                           type="number"
                           value={unit.ratio}
                           onChange={(e) => updateUnit(index, 'ratio', Number(e.target.value))}
                           min="1"
-                          size="sm"
                         />
                       </td>
                       <td>
                         <Form.Control
+                          size="sm"
                           type="number"
                           value={unit.price || ''}
-                          onChange={(e) => updateUnit(index, 'price', Number(e.target.value))}
-                          placeholder="Để trống = tự tính"
-                          size="sm"
+                          onChange={(e) => updateUnit(index, 'price', e.target.value ? Number(e.target.value) : '')}
+                          placeholder={`≈ ${Math.round(price / unit.ratio).toLocaleString('vi-VN')}`}
                         />
+                        {!unit.price && (
+                          <small className="text-muted">Tự động: {Math.round(price / unit.ratio).toLocaleString('vi-VN')}đ</small>
+                        )}
                       </td>
                       <td>
                         <Form.Control
+                          size="sm"
                           type="text"
                           value={unit.description || ''}
                           onChange={(e) => updateUnit(index, 'description', e.target.value)}
                           placeholder="VD: 24 lon x 330ml"
-                          size="sm"
                         />
                       </td>
                       <td className="text-center">
@@ -498,12 +451,8 @@ const ProductEditScreen = () => {
                 </tbody>
               </Table>
               
-              <Button 
-                variant="success" 
-                onClick={addUnit}
-                className="mt-2"
-              >
-                <i className="fas fa-plus"></i> Thêm đơn vị
+              <Button variant="outline-primary" onClick={addUnit} className="mt-2">
+                <i className="fas fa-plus me-1"></i> Thêm đơn vị
               </Button>
             </div>
 

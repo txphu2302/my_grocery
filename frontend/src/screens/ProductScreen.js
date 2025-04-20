@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { Row, Col, Image, ListGroup, Card, Button, Form, Badge, Tab, Nav } from 'react-bootstrap'
+import { Row, Col, Image, ListGroup, Card, Button, Form, Badge } from 'react-bootstrap'
 import Rating from '../components/Rating'
 import { useDispatch, useSelector } from 'react-redux'
 import { listProductDetails } from '../actions/productActions'
@@ -10,8 +10,7 @@ import Meta from '../components/Meta'
 
 const ProductScreen = () => {
   const [qty, setQty] = useState(1)
-  const [selectedUnitName, setSelectedUnitName] = useState('')
-  
+  const [selectedUnit, setSelectedUnit] = useState('')
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { id } = useParams()
@@ -23,82 +22,37 @@ const ProductScreen = () => {
     dispatch(listProductDetails(id))
   }, [dispatch, id])
 
-  // Thiết lập đơn vị mặc định khi product được tải
   useEffect(() => {
+    // Khi product thay đổi, thiết lập đơn vị mặc định
     if (product && product.units && product.units.length > 0) {
-      const defaultUnit = product.units.find(unit => unit.isDefault) || product.units[0];
-      setSelectedUnitName(defaultUnit.name);
+      const defaultUnit = product.units.find(unit => unit.isDefault) || product.units[0]
+      setSelectedUnit(defaultUnit.name)
     } else {
-      setSelectedUnitName('Sản phẩm');
+      setSelectedUnit('Sản phẩm')
     }
   }, [product])
 
   const addToCartHandler = () => {
-    navigate(`/cart/${id}?qty=${qty}&unit=${encodeURIComponent(selectedUnitName)}`);
+    navigate(`/cart/${id}?qty=${qty}&unit=${encodeURIComponent(selectedUnit)}`)
   }
 
-  // Lấy danh sách đơn vị và thông tin
-  const getUnitsInfo = () => {
-    // Nếu sản phẩm có units được cấu hình
-    if (product.units && product.units.length > 0) {
-      return product.units;
-    }
-
-    // Nếu không, tự động tạo đơn vị mặc định dựa vào danh mục
-    if (product.category?.toLowerCase().includes('nước giải khát')) {
-      return [
-        { name: 'Thùng', ratio: 1, isDefault: true },
-        { name: 'Lốc', ratio: 4 },
-        { name: 'Lon/Chai', ratio: 24 }
-      ];
-    } 
-    else if (product.category?.toLowerCase().includes('bánh kẹo')) {
-      return [
-        { name: 'Hộp', ratio: 1, isDefault: true },
-        { name: 'Gói', ratio: 10 },
-        { name: 'Cái', ratio: 50 }
-      ];
-    }
-    else if (product.category?.toLowerCase().includes('mì')) {
-      return [
-        { name: 'Thùng', ratio: 1, isDefault: true },
-        { name: 'Gói', ratio: 30 }
-      ];
-    }
+  // Tính giá theo đơn vị được chọn
+  const calculateUnitPrice = (unitName) => {
+    if (!product || !product.units) return product?.price || 0
     
-    // Mặc định
-    return [{ name: 'Sản phẩm', ratio: 1, isDefault: true }];
+    const unit = product.units.find(u => u.name === unitName)
+    if (!unit) return product.price
+    
+    return unit.price || (product.price / unit.ratio)
   }
 
-  // Tính giá theo đơn vị
-  const calculatePriceByUnit = (unit) => {
-    if (!product || !product.price) return 0;
-    
-    const basePrice = product.retailPrice && product.retailPrice > 0 
-      ? product.retailPrice 
-      : product.price;
-    
-    // Nếu đơn vị có giá riêng, sử dụng nó
-    if (unit.price && unit.price > 0) {
-      return unit.price;
+  // Lấy đơn vị để hiển thị
+  const getUnits = () => {
+    if (!product || !product.units || product.units.length === 0) {
+      return [{ name: 'Sản phẩm', ratio: 1, isDefault: true }]
     }
-    
-    // Nếu không, tính theo tỷ lệ
-    return unit.ratio === 1 ? basePrice : Math.round(basePrice / unit.ratio);
+    return product.units
   }
-
-  // Format giá tiền
-  const formatPrice = (price) => {
-    return price?.toLocaleString('vi-VN') + 'đ';
-  }
-
-  // Tìm đơn vị được chọn
-  const findSelectedUnit = () => {
-    const units = getUnitsInfo();
-    return units.find(u => u.name === selectedUnitName) || units[0];
-  }
-
-  const selectedUnit = findSelectedUnit();
 
   return (
     <>
@@ -113,10 +67,10 @@ const ProductScreen = () => {
         <>
           <Meta title={product.name} />
           <Row>
-            <Col md={5}>
+            <Col md={6}>
               <Image src={product.image} alt={product.name} fluid className='product-image shadow-sm rounded' />
             </Col>
-            <Col md={4}>
+            <Col md={3}>
               <ListGroup variant='flush'>
                 <ListGroup.Item>
                   <h3>{product.name}</h3>
@@ -128,46 +82,25 @@ const ProductScreen = () => {
                   />
                 </ListGroup.Item>
                 
-                {/* Hiển thị bảng giá theo đơn vị khác nhau */}
+                {/* Hiển thị giá theo đơn vị nếu có nhiều đơn vị */}
                 <ListGroup.Item>
-                  <h5>Giá bán theo đơn vị</h5>
-                  <Tab.Container defaultActiveKey={selectedUnitName}>
-                    <Nav variant="tabs" className="mb-3">
-                      {getUnitsInfo().map((unit, index) => (
-                        <Nav.Item key={index}>
-                          <Nav.Link 
-                            eventKey={unit.name} 
-                            onClick={() => setSelectedUnitName(unit.name)}
-                            className="py-1 px-3"
-                          >
-                            {unit.name}
-                          </Nav.Link>
-                        </Nav.Item>
-                      ))}
-                    </Nav>
-                    <Tab.Content>
-                      {getUnitsInfo().map((unit, index) => (
-                        <Tab.Pane key={index} eventKey={unit.name}>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <h4 className="mb-0">
-                              <span className="text-danger fw-bold">
-                                {formatPrice(calculatePriceByUnit(unit))}
-                              </span>
-                              <small className="text-muted ms-2">/{unit.name}</small>
-                            </h4>
-                            {unit.ratio !== 1 && (
-                              <Badge bg="info">
-                                {unit.ratio} {unit.name} = 1 {getUnitsInfo().find(u => u.ratio === 1)?.name || 'Đơn vị gốc'}
-                              </Badge>
-                            )}
-                            {unit.description && (
-                              <div className="text-muted small">{unit.description}</div>
-                            )}
-                          </div>
-                        </Tab.Pane>
-                      ))}
-                    </Tab.Content>
-                  </Tab.Container>
+                  {product.units && product.units.length > 1 ? (
+                    <>
+                      <h5>Giá theo đơn vị:</h5>
+                      <ListGroup variant="flush">
+                        {product.units.map((unit, index) => (
+                          <ListGroup.Item key={index} action onClick={() => setSelectedUnit(unit.name)} 
+                            active={selectedUnit === unit.name}
+                            className="d-flex justify-content-between align-items-center py-2">
+                            <span>{unit.name}</span>
+                            <h5 className="mb-0">{(unit.price || (product.price / unit.ratio)).toLocaleString('vi-VN')}đ</h5>
+                          </ListGroup.Item>
+                        ))}
+                      </ListGroup>
+                    </>
+                  ) : (
+                    <h4>Giá: {product.price.toLocaleString('vi-VN')}đ</h4>
+                  )}
                 </ListGroup.Item>
                 
                 <ListGroup.Item>
@@ -183,6 +116,10 @@ const ProductScreen = () => {
                     <Col><strong>{product.category}</strong></Col>
                   </Row>
                 </ListGroup.Item>
+                
+                <ListGroup.Item>
+                  <p>{product.description}</p>
+                </ListGroup.Item>
               </ListGroup>
             </Col>
             
@@ -193,10 +130,10 @@ const ProductScreen = () => {
                     <Row>
                       <Col>Giá:</Col>
                       <Col>
-                        <strong className="text-danger">
-                          {formatPrice(calculatePriceByUnit(selectedUnit))}
-                        </strong>
-                        <small className="text-muted">/{selectedUnitName}</small>
+                        <strong>{calculateUnitPrice(selectedUnit).toLocaleString('vi-VN')}đ</strong>
+                        {selectedUnit && selectedUnit !== 'Sản phẩm' && (
+                          <Badge bg="secondary" className="ms-1">/{selectedUnit}</Badge>
+                        )}
                       </Col>
                     </Row>
                   </ListGroup.Item>
@@ -212,27 +149,30 @@ const ProductScreen = () => {
 
                   {product.countInStock > 0 && (
                     <ListGroup.Item>
-                      <Row className="mb-2">
-                        <Col>Đơn vị:</Col>
-                        <Col>
-                          <Form.Select
-                            value={selectedUnitName}
-                            onChange={(e) => setSelectedUnitName(e.target.value)}
-                          >
-                            {getUnitsInfo().map((unit, index) => (
-                              <option key={index} value={unit.name}>
-                                {unit.name}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Col>
-                      </Row>
+                      {/* Hiển thị dropdown chọn đơn vị nếu có nhiều đơn vị */}
+                      {product.units && product.units.length > 1 && (
+                        <Row className="mb-2">
+                          <Col>Đơn vị:</Col>
+                          <Col>
+                            <Form.Select
+                              value={selectedUnit}
+                              onChange={(e) => setSelectedUnit(e.target.value)}
+                            >
+                              {getUnits().map((unit, index) => (
+                                <option key={index} value={unit.name}>
+                                  {unit.name}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Col>
+                        </Row>
+                      )}
                       
                       <Row>
-                        <Col>Số lượng:</Col>
+                        <Col>Số lượng</Col>
                         <Col>
                           <Form.Control
-                            as="select"
+                            as='select'
                             value={qty}
                             onChange={(e) => setQty(e.target.value)}
                           >
@@ -262,13 +202,6 @@ const ProductScreen = () => {
                   </ListGroup.Item>
                 </ListGroup>
               </Card>
-            </Col>
-          </Row>
-          
-          <Row className="mt-4">
-            <Col>
-              <h4>Mô tả sản phẩm</h4>
-              <p>{product.description}</p>
             </Col>
           </Row>
         </>
