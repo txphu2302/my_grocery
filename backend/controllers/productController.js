@@ -46,20 +46,46 @@ const getProductById = asyncHandler(async (req, res) => {
 // @route  DELETE /api/products/:id
 // @access Private/Admin
 const deleteProduct = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  console.log('Attempting to delete product with ID:', id);
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    console.error('Invalid ID format:', id);
-    res.status(400);
-    throw new Error('ID sản phẩm không hợp lệ');
-  }
-
   try {
+    const id = req.params.id;
     const product = await Product.findById(id);
+    
     if (product) {
-      // Xóa tài liệu liên quan (nếu có)
-      await Review.deleteMany({ product: id }); // Bật nếu có model Review
+      // Xóa ảnh trên Cloudinary nếu ảnh từ Cloudinary
+      if (product.image && product.image.includes('cloudinary')) {
+        try {
+          // Lấy public_id từ URL
+          const splittedUrl = product.image.split('/');
+          const folderWithPublicId = splittedUrl[splittedUrl.length - 2] + '/' + 
+                                    splittedUrl[splittedUrl.length - 1].split('.')[0];
+          
+          console.log('Attempting to delete image:', folderWithPublicId);
+          
+          // Xóa ảnh từ Cloudinary (không chặn quá trình xóa sản phẩm)
+          cloudinary.uploader.destroy(folderWithPublicId)
+            .then(result => console.log('Cloudinary delete result:', result))
+            .catch(err => console.error('Failed to delete from Cloudinary:', err));
+        } catch (cloudinaryError) {
+          console.error('Error parsing Cloudinary URL:', cloudinaryError);
+          // Không dừng quá trình xóa sản phẩm nếu không xóa được ảnh
+        }
+      }
+      
+      // Xóa reviews nếu có model Review
+      try {
+        // Kiểm tra tồn tại model Review trước khi xóa
+        const mongoose = require('mongoose');
+        if (mongoose.modelNames().includes('Review')) {
+          const Review = mongoose.model('Review');
+          await Review.deleteMany({ product: id });
+          console.log('Related reviews deleted');
+        }
+      } catch (reviewError) {
+        console.error('Error while deleting reviews:', reviewError);
+        // Tiếp tục xóa sản phẩm ngay cả khi không xóa được reviews
+      }
+
+      // Xóa sản phẩm
       await Product.deleteOne({ _id: id });
       console.log('Product deleted:', id);
       res.json({ message: 'Đã xóa sản phẩm' });
@@ -73,6 +99,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Lỗi khi xóa sản phẩm', error: error.message });
   }
 });
+
 
 // @desc   Tạo sản phẩm
 // @route  POST /api/products

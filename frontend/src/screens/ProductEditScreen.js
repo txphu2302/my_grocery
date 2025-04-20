@@ -1,140 +1,139 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
-import { Form, Button, Row, Col, Image } from 'react-bootstrap'
-import { useDispatch, useSelector } from 'react-redux'
-import Message from '../components/Message'
-import Loader from '../components/Loader'
-import FormContainer from '../components/FormContainer'
-import { listProductDetails, updateProduct } from '../actions/productActions'
-import { PRODUCT_UPDATE_RESET } from '../constants/productConstants'
-import axios from 'axios'
+import React, { useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Form, Button, Row, Col } from 'react-bootstrap';
+import { useDispatch, useSelector } from 'react-redux';
+import Message from '../components/Message';
+import Loader from '../components/Loader';
+import FormContainer from '../components/FormContainer';
+import { listProductDetails, updateProduct } from '../actions/productActions';
+import { PRODUCT_UPDATE_RESET } from '../constants/productConstants';
+import axios from 'axios';
 
 const ProductEditScreen = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const [name, setName] = useState('')
-  const [price, setPrice] = useState(0)
-  const [image, setImage] = useState('')
-  const [brand, setBrand] = useState('')
-  const [category, setCategory] = useState('')
-  const [countInStock, setCountInStock] = useState(0)
-  const [description, setDescription] = useState('')
-  const [barcode, setBarcode] = useState('')
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState(null)
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState(0);
+  const [image, setImage] = useState('');
+  const [brand, setBrand] = useState('');
+  const [category, setCategory] = useState('');
+  const [countInStock, setCountInStock] = useState(0);
+  const [description, setDescription] = useState('');
+  const [barcode, setBarcode] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
-  const productDetails = useSelector((state) => state.productDetails)
-  const { loading, error, product } = productDetails
+  const productDetails = useSelector((state) => state.productDetails);
+  const { loading, error, product } = productDetails;
 
-  const productUpdate = useSelector((state) => state.productUpdate)
-  const {
-    loading: loadingUpdate,
-    error: errorUpdate,
-    success: successUpdate,
-  } = productUpdate
+  const productUpdate = useSelector((state) => state.productUpdate);
+  const { loading: loadingUpdate, error: errorUpdate, success: successUpdate } = productUpdate;
 
   useEffect(() => {
     if (successUpdate) {
-      dispatch({ type: PRODUCT_UPDATE_RESET })
-      navigate('/admin/productlist')
+      dispatch({ type: PRODUCT_UPDATE_RESET });
+      navigate('/admin/productlist');
     } else {
       if (!product.name || product._id !== id) {
-        dispatch(listProductDetails(id))
+        dispatch(listProductDetails(id));
       } else {
-        setName(product.name)
-        setPrice(product.price)
-        setImage(product.image)
-        setBrand(product.brand)
-        setCategory(product.category)
-        setCountInStock(product.countInStock)
-        setDescription(product.description)
-        setBarcode(product.barcode || '')
+        setName(product.name);
+        setPrice(product.price);
+        setImage(product.image);
+        setBrand(product.brand);
+        setCategory(product.category);
+        setCountInStock(product.countInStock);
+        setDescription(product.description);
+        setBarcode(product.barcode || '');
       }
     }
-  }, [dispatch, id, product, successUpdate, navigate])
+  }, [dispatch, id, product, successUpdate, navigate]);
 
   const uploadFileHandler = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    
-    // Validate file size and type
-    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
-    const maxSize = 5 * 1024 * 1024 // 5MB
-    
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+  
     if (!validTypes.includes(file.type)) {
-      setUploadError('Chỉ chấp nhận file JPG, JPEG, PNG hoặc WebP')
-      return
+      setUploadError('Chỉ chấp nhận file JPG, JPEG, PNG hoặc WebP');
+      return;
     }
-    
+  
     if (file.size > maxSize) {
-      setUploadError('Kích thước file không được vượt quá 5MB')
-      return
+      setUploadError('Kích thước file không được vượt quá 5MB');
+      return;
     }
-    
-    setUploadError(null)
-    const formData = new FormData()
-    formData.append('image', file)
-    setUploading(true)
+  
+    setUploadError(null);
+    const formData = new FormData();
+    formData.append('image', file);
+    setUploading(true);
   
     try {
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      };
   
-      const { data } = await axios.post('/api/upload', formData, config)
-      console.log('Upload response:', data)
-      setImage(data)
-      setUploading(false)
+      // Thay đổi URL từ tương đối thành URL trực tiếp đến backend
+      const { data } = await axios.post(
+        'https://taphoaanha-com.onrender.com/api/upload',
+        formData,
+        config
+      );
+      
+      console.log('Upload response:', data);
+      setImage(data);
+      setUploading(false);
     } catch (error) {
-      console.error('Upload error:', error)
+      console.error('Upload error:', error);
       setUploadError(
         error.response && error.response.data.message
           ? error.response.data.message
           : 'Có lỗi xảy ra khi tải ảnh lên'
-      )
-      setUploading(false)
+      );
+      setUploading(false);
     }
-  }
+  };
 
   const submitHandler = (e) => {
-    e.preventDefault()
-    
-    // Basic validation
+    e.preventDefault();
+
     if (!name.trim()) {
-      return alert('Vui lòng nhập tên sản phẩm')
+      return alert('Vui lòng nhập tên sản phẩm');
     }
-    
+
     if (!image.trim()) {
-      return alert('Vui lòng thêm hình ảnh cho sản phẩm')
+      return alert('Vui lòng thêm hình ảnh cho sản phẩm');
     }
-    
+
     if (!category.trim()) {
-      return alert('Vui lòng nhập danh mục sản phẩm')
+      return alert('Vui lòng nhập danh mục sản phẩm');
     }
-    
-    // Set default values for optional fields
-    const finalBrand = brand.trim() || 'Không có thương hiệu'
-    const finalBarcode = barcode.trim() || `PROD${Date.now()}`
-    
+
+    const finalBrand = brand.trim() || 'Không có thương hiệu';
+    const finalBarcode = barcode.trim() || `PROD${Date.now()}`;
+
     dispatch(
       updateProduct({
         _id: id,
         name,
         price,
         image,
-        brand: finalBrand, 
+        brand: finalBrand,
         category,
         description,
         countInStock,
-        barcode: finalBarcode
+        barcode: finalBarcode,
       })
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -197,17 +196,18 @@ const ProductEditScreen = () => {
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
               />
+            </Form.Group>
+
+            <Form.Group controlId='imageFile' className='mt-3'>
+              <Form.Label>Upload hình ảnh</Form.Label>
               <Form.Control
                 type='file'
-                id='image-file'
                 label='Chọn file'
                 onChange={uploadFileHandler}
-                className='mt-2'
                 accept=".jpg,.jpeg,.png,.webp"
               />
               {uploading && <Loader />}
               {uploadError && <Message variant='danger'>{uploadError}</Message>}
-            
             </Form.Group>
 
             <Row className='mt-3'>
@@ -268,7 +268,7 @@ const ProductEditScreen = () => {
         )}
       </FormContainer>
     </>
-  )
-}
+  );
+};
 
-export default ProductEditScreen
+export default ProductEditScreen;
