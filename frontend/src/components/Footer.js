@@ -8,8 +8,8 @@ const Footer = () => {
         <Row>
           <Col className='text-center py-3'>
             <p>Tạp Hóa Online &copy; {new Date().getFullYear()}</p>
-            <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh</p>
-            <p>Điện thoại: 0123 456 789</p>
+            <p>Địa chỉ: 75 / 3 </p>
+            <p>Điện thoại: 034 822 7858</p>
           </Col>
         </Row>
       </Container>

@@ -4,6 +4,7 @@ const productSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
     image: { type: String, required: false, default: '/images/sample.jpg' },
+    brand:  { type: String, required: true, default: 'Chưa có thương hiệu' },
     category: { type: String, required: true },
     description: { type: String, required: true },
     price: { type: Number, required: true, default: 0 },
