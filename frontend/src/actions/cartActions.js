@@ -8,42 +8,57 @@ import {
 } from '../constants/cartConstants';
 
 export const addToCart = (id, qty, unitName = 'Sản phẩm') => async (dispatch, getState) => {
-  const { data } = await api.get(`/api/products/${id}`);
+  const { data: product } = await api.get(`/api/products/${id}`);
   
-  // Xác định đơn vị và giá
-  let unit = { name: 'Sản phẩm', ratio: 1 };
-  let price = data.price;
+  // Khởi tạo thông tin mặc định của đơn vị
+  let selectedUnit = { 
+    name: 'Sản phẩm', 
+    ratio: 1,
+    image: product.image // Mặc định dùng hình ảnh của sản phẩm
+  };
+  
+  let productName = product.name;
+  let productImage = product.image;
+  let price = product.price;
   
   // Nếu sản phẩm có units và có đơn vị được chọn
-  if (data.units && data.units.length > 0 && unitName) {
-    const selectedUnit = data.units.find(u => u.name === unitName);
-    if (selectedUnit) {
-      unit = {
-        name: selectedUnit.name,
-        ratio: selectedUnit.ratio
+  if (product.units && product.units.length > 0 && unitName) {
+    const unit = product.units.find(u => u.name === unitName);
+    if (unit) {
+      selectedUnit = {
+        name: unit.name,
+        ratio: unit.ratio || 1,
+        description: unit.description || '',
+        image: unit.image || product.image // Ưu tiên dùng hình ảnh của đơn vị, nếu không có thì dùng hình sản phẩm
       };
-      // Sử dụng giá của đơn vị nếu có, nếu không thì tính theo tỷ lệ
-      price = selectedUnit.price || data.price / selectedUnit.ratio;
+      
+      // Nếu có hình ảnh riêng của đơn vị, sử dụng nó
+      if (unit.image) {
+        productImage = unit.image;
+      }
+      
+      // Tính giá theo đơn vị
+      price = unit.price || (product.price / (unit.ratio || 1));
     }
   }
 
   dispatch({
     type: CART_ADD_ITEM,
     payload: {
-      product: data._id,
-      name: data.name,
-      image: data.image,
+      product: product._id,
+      name: productName,
+      image: productImage, // Sử dụng hình ảnh phù hợp với đơn vị
       price: price,
-      countInStock: data.countInStock,
+      countInStock: product.countInStock,
       qty,
-      unit
+      unit: selectedUnit
     },
   });
 
   localStorage.setItem('cartItems', JSON.stringify(getState().cart.cartItems));
 };
 
-// Các hàm khác giữ nguyên
+// Các hàm khác không thay đổi
 export const removeFromCart = (id) => (dispatch, getState) => {
   dispatch({
     type: CART_REMOVE_ITEM,

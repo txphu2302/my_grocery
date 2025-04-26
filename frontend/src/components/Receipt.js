@@ -69,6 +69,8 @@ const Receipt = ({ order }) => {
       .receipt-footer { margin-top: 10px; text-align: center; font-size: 12px; }
       .receipt-total { font-weight: bold; border-top: 1px dashed #000; padding-top: 5px; }
       .divider { border-top: 1px dashed #000; margin: 8px 0; }
+      .product-name { font-size: 12px; }
+      .unit-info { font-size: 10px; color: #555; }
       @page { margin: 0; size: 58mm 100%; }
     `)
     windowPrint.document.write('</style></head><body>')
@@ -96,6 +98,11 @@ const Receipt = ({ order }) => {
     }
   }
 
+  const formatPrice = (price) => {
+    if (!price && price !== 0) return '0'
+    return price.toLocaleString('vi-VN')
+  }
+
   // Kiểm tra dữ liệu trước khi render
   if (!order) {
     return <div>Đang tải dữ liệu đơn hàng...</div>
@@ -120,7 +127,7 @@ const Receipt = ({ order }) => {
           <div className="receipt-header">
             <h2>TẠP HÓA AN HÀ</h2>
             <p>Địa chỉ: 75/3, ĐƯỜNG LÊ NGUYÊN ĐẠT</p>
-            <p>SĐT: 0961200741</p>
+            <p>SĐT: 0348227858</p>
             <div className="divider"></div>
             <h3>HÓA ĐƠN BÁN HÀNG</h3>
             <p>Mã đơn: {order._id}</p>
@@ -141,10 +148,23 @@ const Receipt = ({ order }) => {
             <tbody>
               {order.orderItems.map((item, index) => (
                 <tr key={index}>
-                  <td align="left">{item.name}</td>
+                  <td align="left">
+                    <div className="product-name">{item.name}</div>
+                    {item.unit && item.unit.name !== 'Sản phẩm' && (
+                      <div className="unit-info">
+                        {item.unit.name}
+                        {item.unit.description && ` (${item.unit.description})`}
+                      </div>
+                    )}
+                  </td>
                   <td align="right">{item.qty}</td>
-                  <td align="right">{item.price?.toLocaleString('vi-VN')}đ</td>
-                  <td align="right">{(item.qty * (item.price || 0)).toLocaleString('vi-VN')}đ</td>
+                  <td align="right">
+                    {formatPrice(item.price)}đ
+                    {item.unit && item.unit.name !== 'Sản phẩm' && (
+                      <div className="unit-info">/{item.unit.name}</div>
+                    )}
+                  </td>
+                  <td align="right">{formatPrice(item.qty * (item.price || 0))}đ</td>
                 </tr>
               ))}
             </tbody>
@@ -153,7 +173,7 @@ const Receipt = ({ order }) => {
           <div className="divider"></div>
           
           <div className="receipt-total">
-            <p>Tổng tiền: {order.totalPrice?.toLocaleString('vi-VN')}đ</p>
+            <p>Tổng tiền: {formatPrice(order.totalPrice)}đ</p>
             <p>Phương thức: {order.paymentMethod}</p>
             <p>Trạng thái: {order.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}</p>
           </div>

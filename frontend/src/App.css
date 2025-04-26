@@ -138,3 +138,12 @@
   margin-left: -0.5rem;
   margin-right: -0.5rem;
 }
+
+.product-name {
+   font-size: 12px; 
+}
+.unit-info {
+   font-size: 10px; 
+   color: #555; 
+}
+

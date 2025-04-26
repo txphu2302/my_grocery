@@ -36,6 +36,11 @@ const CartScreen = () => {
     navigate('/login?redirect=/shipping')
   }
   
+  // Định dạng tiền Việt Nam
+  const formatPrice = (price) => {
+    return price ? price.toLocaleString('vi-VN') : '0';
+  }
+  
   return (
     <Row>
       <Col md={8}>
@@ -50,14 +55,30 @@ const CartScreen = () => {
               <ListGroup.Item key={item.product}>
                 <Row className="align-items-center">
                   <Col md={2}>
-                    <Image src={item.image} alt={item.name} fluid rounded />
+                    <Image 
+                      src={item.image} 
+                      alt={item.name} 
+                      fluid 
+                      rounded 
+                      onError={({currentTarget}) => {
+                        currentTarget.onerror = null;
+                        currentTarget.src="/images/placeholder.jpg";
+                      }}
+                    />
                   </Col>
                   <Col md={3}>
-                    <Link to={`/product/${item.product}`}>{item.name}</Link>
+                    <Link to={`/product/${item.product}`}>
+                      {item.name}
+                      {item.unit.description && (
+                        <div>
+                          <small className="text-muted">{item.unit.description}</small>
+                        </div>
+                      )}
+                    </Link>
                   </Col>
                   <Col md={2}>
                     <div>
-                      {item.price.toLocaleString('vi-VN')}đ
+                      {formatPrice(item.price)}đ
                       {item.unit && item.unit.name !== 'Sản phẩm' && (
                         <Badge bg="secondary" className="ms-1">
                           /{item.unit.name}
@@ -75,7 +96,7 @@ const CartScreen = () => {
                         )
                       }
                     >
-                      {[...Array(item.countInStock).keys()].map((x) => (
+                      {[...Array(Math.min(item.countInStock, 10)).keys()].map((x) => (
                         <option key={x + 1} value={x + 1}>
                           {x + 1}
                         </option>
@@ -108,9 +129,7 @@ const CartScreen = () => {
                 Tổng cộng ({cartItems.reduce((acc, item) => acc + item.qty, 0)}) sản phẩm
               </h2>
               <h4 className="mt-3 text-primary">
-                {cartItems
-                  .reduce((acc, item) => acc + item.qty * item.price, 0)
-                  .toLocaleString('vi-VN')}đ
+                {formatPrice(cartItems.reduce((acc, item) => acc + item.qty * item.price, 0))}đ
               </h4>
             </ListGroup.Item>
             <ListGroup.Item>
