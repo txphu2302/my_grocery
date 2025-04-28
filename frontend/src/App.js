@@ -34,6 +34,7 @@ const App = () => {
             <Route path='/login' element={<LoginScreen />} />
             <Route path='/register' element={<RegisterScreen />} />
             <Route path='/admin/productlist' element={<ProductListScreen />} />
+            <Route path='/admin/productlist/page/:pageNumber' element={<ProductListScreen />} />
             <Route path='/admin/orderlist' element={<OrderListScreen />} />
             <Route path='/admin/product/:id/edit' element={<ProductEditScreen />} />
             <Route path='/profile' element={<ProfileScreen />} />

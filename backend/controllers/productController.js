@@ -11,6 +11,7 @@ const getProducts = asyncHandler(async (req, res) => {
   const pageSize = 12;
   const page = Number(req.query.pageNumber) || 1;
   
+  // Bổ sung lọc theo category và brand
   const keyword = req.query.keyword
     ? {
         name: {
@@ -19,13 +20,32 @@ const getProducts = asyncHandler(async (req, res) => {
         },
       }
     : {};
+      
+  // Thêm filter theo category và brand
+  const categoryFilter = req.query.category ? { category: req.query.category } : {};
+  const brandFilter = req.query.brand ? { brand: req.query.brand } : {};
+  
+  // Kết hợp các bộ lọc
+  const filters = {
+    ...keyword,
+    ...categoryFilter,
+    ...brandFilter
+  };
 
-  const count = await Product.countDocuments({ ...keyword });
-  const products = await Product.find({ ...keyword })
-    .limit(pageSize)
-    .skip(pageSize * (page - 1));
-
-  res.json({ products, page, pages: Math.ceil(count / pageSize) });
+  // Nếu đang lọc theo category hoặc brand, bỏ qua phân trang
+  if (req.query.category || req.query.brand) {
+    const count = await Product.countDocuments({ ...filters });
+    const products = await Product.find({ ...filters });
+    return res.json({ products, page: 1, pages: 1, count });
+  } else {
+    // Phân trang bình thường nếu không lọc
+    const count = await Product.countDocuments({ ...filters });
+    const products = await Product.find({ ...filters })
+      .limit(pageSize)
+      .skip(pageSize * (page - 1));
+    
+    res.json({ products, page, pages: Math.ceil(count / pageSize), count });
+  }
 });
 
 // @desc   Lấy một sản phẩm theo ID
@@ -168,6 +188,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new Error('Không tìm thấy sản phẩm');
   }
 });
+
+
 
 export { 
   getProducts, 
