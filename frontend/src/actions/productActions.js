@@ -18,13 +18,17 @@ import {
   PRODUCT_DELETE_FAIL,
 } from '../constants/productConstants';
 
-export const listProducts = (keyword = '', pageNumber = '') => async (dispatch) => {
+export const listProducts = (keyword = '', pageNumber = '', category = '') => async (dispatch) => {
   try {
     dispatch({ type: PRODUCT_LIST_REQUEST });
 
-    const { data } = await api.get(
-      `/api/products?keyword=${keyword}&pageNumber=${pageNumber}`
-    );
+    // Thêm tham số category vào URL
+    let url = `/api/products?keyword=${keyword}&pageNumber=${pageNumber}`;
+    if (category) {
+      url += `&category=${category}`;
+    }
+    
+    const { data } = await api.get(url);
 
     dispatch({
       type: PRODUCT_LIST_SUCCESS,
